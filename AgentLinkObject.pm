@@ -334,6 +334,7 @@ sub Run {
         # add new links
         if ( $ParamObject->GetParam( Param => 'SubmitLink' ) ) {
 
+            $Kernel::OM->Get('Kernel::System::Log')->Dumper('Debug - 1111');
             # challenge token check for write action
             $LayoutObject->ChallengeTokenCheck();
 
@@ -507,6 +508,12 @@ sub Run {
             );
         }
 
+        # get list type
+        my $TreeView = 0;
+        if ( $ConfigObject->Get('Ticket::Frontend::ListType') eq 'tree' ) {
+            $TreeView = 1;
+        }
+
         my @Attributes = (
 
             # Main fields
@@ -658,71 +665,6 @@ sub Run {
             );
         }
 
-        # Time fields
-        push @Attributes, (
-            {
-                Key      => '',
-                Value    => '-',
-                Disabled => 1,
-            },
-            {
-                Key   => 'TicketLastChangeTimePoint',
-                Value => Translatable('Ticket Last Change Time (before/after)'),
-            },
-            {
-                Key   => 'TicketLastChangeTimeSlot',
-                Value => Translatable('Ticket Last Change Time (between)'),
-            },
-            {
-                Key   => 'TicketChangeTimePoint',
-                Value => Translatable('Ticket Change Time (before/after)'),
-            },
-            {
-                Key   => 'TicketChangeTimeSlot',
-                Value => Translatable('Ticket Change Time (between)'),
-            },
-            {
-                Key   => 'TicketCloseTimePoint',
-                Value => Translatable('Ticket Close Time (before/after)'),
-            },
-            {
-                Key   => 'TicketCloseTimeSlot',
-                Value => Translatable('Ticket Close Time (between)'),
-            },
-            {
-                Key   => 'TicketCreateTimePoint',
-                Value => Translatable('Ticket Create Time (before/after)'),
-            },
-            {
-                Key   => 'TicketCreateTimeSlot',
-                Value => Translatable('Ticket Create Time (between)'),
-            },
-            {
-                Key   => 'TicketPendingTimePoint',
-                Value => Translatable('Ticket Pending Until Time (before/after)'),
-            },
-            {
-                Key   => 'TicketPendingTimeSlot',
-                Value => Translatable('Ticket Pending Until Time (between)'),
-            },
-            {
-                Key   => 'TicketEscalationTimePoint',
-                Value => Translatable('Ticket Escalation Time (before/after)'),
-            },
-            {
-                Key   => 'TicketEscalationTimeSlot',
-                Value => Translatable('Ticket Escalation Time (between)'),
-            },
-            {
-                Key   => 'ArticleCreateTimePoint',
-                Value => Translatable('Article Create Time (before/after)'),
-            },
-            {
-                Key   => 'ArticleCreateTimeSlot',
-                Value => Translatable('Article Create Time (between)'),
-            },
-        );
-
         if ( $ConfigObject->Get('Ticket::ArchiveSystem') ) {
             push @Attributes, (
                 {
@@ -784,7 +726,7 @@ sub Run {
             Size               => 5,
             Multiple           => 1,
             Name               => 'QueueIDs',
-            # TreeView           => $TreeView,
+            TreeView           => $TreeView,
             # SelectedIDRefArray => $GetParam{QueueIDs},
             OnChangeSubmit     => 0,
             Class              => 'Modernize',
@@ -794,7 +736,7 @@ sub Run {
             Size               => 5,
             Multiple           => 1,
             Name               => 'CreatedQueueIDs',
-            # TreeView           => $TreeView,
+            TreeView           => $TreeView,
             # SelectedIDRefArray => $GetParam{CreatedQueueIDs},
             OnChangeSubmit     => 0,
             Class              => 'Modernize',
@@ -803,7 +745,7 @@ sub Run {
             Data => {
                 $Kernel::OM->Get('Kernel::System::Priority')->PriorityList(
                     UserID => $Self->{UserID},
-                    # Action => $Self->{Action},
+                    Action => $Self->{Action},
                 ),
             },
             Name       => 'PriorityIDs',
@@ -825,6 +767,144 @@ sub Run {
             # SelectedID => $GetParam{LockIDs},
             Class      => 'Modernize',
         );
+
+        # get all users of own groups
+        my $UserObject = $Kernel::OM->Get('Kernel::System::User');
+        my %AllUsers = $UserObject->UserList(
+            Type  => 'Long',
+            Valid => 0,
+        );
+        if ( !$ConfigObject->Get('Ticket::ChangeOwnerToEveryone') ) {
+            my %Involved = $Kernel::OM->Get('Kernel::System::Group')->PermissionUserInvolvedGet(
+                UserID => $Self->{UserID},
+                Type   => 'ro',
+            );
+            for my $UserID ( sort keys %AllUsers ) {
+                if ( !$Involved{$UserID} ) {
+                    delete $AllUsers{$UserID};
+                }
+            }
+        }
+
+        my @ShownUsers;
+        my %UsersInvalid;
+
+        # get valid users of own groups
+        my %ValidUsers = $UserObject->UserList(
+            Type  => 'Long',
+            Valid => 1,
+        );
+
+        USERID:
+        for my $UserID ( sort { $AllUsers{$a} cmp $AllUsers{$b} } keys %AllUsers ) {
+
+            if ( !$ValidUsers{$UserID} ) {
+                $UsersInvalid{$UserID} = $AllUsers{$UserID};
+                next USERID;
+            }
+
+            push @ShownUsers, {
+                Key   => $UserID,
+                Value => $AllUsers{$UserID},
+            };
+        }
+
+        # also show invalid agents (if any)
+        if ( scalar %UsersInvalid ) {
+            push @ShownUsers, {
+                Key      => '-',
+                Value    => '_____________________',
+                Disabled => 1,
+            };
+            push @ShownUsers, {
+                Key      => '-',
+                Value    => $LayoutObject->{LanguageObject}->Translate('Invalid Users'),
+                Disabled => 1,
+            };
+            push @ShownUsers, {
+                Key      => '-',
+                Value    => '',
+                Disabled => 1,
+            };
+            for my $UserID ( sort { $UsersInvalid{$a} cmp $UsersInvalid{$b} } keys %UsersInvalid ) {
+                push @ShownUsers, {
+                    Key   => $UserID,
+                    Value => $UsersInvalid{$UserID},
+                };
+            }
+        }
+
+        $Param{UserStrg} = $LayoutObject->BuildSelection(
+            Data       => \@ShownUsers,
+            Name       => 'OwnerIDs',
+            Multiple   => 1,
+            Size       => 5,
+            # SelectedID => $GetParam{OwnerIDs},
+            Class      => 'Modernize',
+        );
+        $Param{CreatedUserStrg} = $LayoutObject->BuildSelection(
+            Data       => \@ShownUsers,
+            Name       => 'CreatedUserIDs',
+            Multiple   => 1,
+            Size       => 5,
+            # SelectedID => $GetParam{CreatedUserIDs},
+            Class      => 'Modernize',
+        );
+        if ( $ConfigObject->Get('Ticket::Watcher') ) {
+            $Param{WatchUserStrg} = $LayoutObject->BuildSelection(
+                Data       => \@ShownUsers,
+                Name       => 'WatchUserIDs',
+                Multiple   => 1,
+                Size       => 5,
+                # SelectedID => $GetParam{WatchUserIDs},
+                Class      => 'Modernize',
+            );
+        }
+        if ( $ConfigObject->Get('Ticket::Responsible') ) {
+            $Param{ResponsibleStrg} = $LayoutObject->BuildSelection(
+                Data       => \@ShownUsers,
+                Name       => 'ResponsibleIDs',
+                Multiple   => 1,
+                Size       => 5,
+                # SelectedID => $GetParam{ResponsibleIDs},
+                Class      => 'Modernize',
+            );
+        }
+
+        # build service string
+        if ( $ConfigObject->Get('Ticket::Service') ) {
+
+            my %Service = $Kernel::OM->Get('Kernel::System::Service')->ServiceList(
+                UserID       => $Self->{UserID},
+                KeepChildren => $ConfigObject->Get('Ticket::Service::KeepChildren'),
+            );
+            $Param{ServicesStrg} = $LayoutObject->BuildSelection(
+                Data        => \%Service,
+                Name        => 'ServiceIDs',
+                # SelectedID  => $GetParam{ServiceIDs},
+                TreeView    => $TreeView,
+                Sort        => 'TreeView',
+                Size        => 5,
+                Multiple    => 1,
+                Translation => 0,
+                Max         => 200,
+                Class       => 'Modernize',
+            );
+            my %SLA = $Kernel::OM->Get('Kernel::System::SLA')->SLAList(
+                UserID => $Self->{UserID},
+            );
+            $Param{SLAsStrg} = $LayoutObject->BuildSelection(
+                Data        => \%SLA,
+                Name        => 'SLAIDs',
+                # SelectedID  => $GetParam{SLAIDs},
+                Sort        => 'AlphanumericValue',
+                Size        => 5,
+                Multiple    => 1,
+                Translation => 0,
+                Max         => 200,
+                Class       => 'Modernize',
+            );
+        }
 
         # output link block
         $LayoutObject->Block(
@@ -853,6 +933,8 @@ sub Run {
             Object    => $Form{TargetObject},
             SubObject => $Form{TargetSubObject},
         );
+
+        $Kernel::OM->Get('Kernel::System::Log')->Dumper('Debug - @SearchOptionList', \@SearchOptionList);
 
         # output search option fields
         for my $Option (@SearchOptionList) {

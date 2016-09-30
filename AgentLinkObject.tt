@@ -1,0 +1,283 @@
+# --
+# Copyright (C) 2001-2016 OTRS AG, http://otrs.com/
+# --
+# This software comes with ABSOLUTELY NO WARRANTY. For details, see
+# the enclosed file COPYING for license information (AGPL). If you
+# did not receive this file, see http://www.gnu.org/licenses/agpl.txt.
+# --
+
+[% RenderBlockStart("Link") %]
+<div class="LayoutPopup ARIARoleMain">
+
+    <div class="Header">
+        <h1>
+            [% Translate("Link Object: %s", Data.SourceObjectLong) | html %]
+        </h1>
+        <p>
+            <a href="[% Env("Baselink") %]Action=[% Env("Action") %];Subaction=Close" id="LinkAddCloseLink">[% Translate("Close dialog") | html %]</a>
+[% RenderBlockStart("LinkMenuDelete") %]
+            [% Translate("or") | html %]
+            <a href="[% Env("Baselink") %]Action=[% Env("Action") %];Subaction=LinkDelete;Mode=[% Data.Mode | uri %];SourceObject=[% Data.SourceObject | uri %];SourceKey=[% Data.SourceKey | uri %];TargetIdentifier=[% Data.TargetIdentifier | uri %]">
+                [% Translate("go to link delete screen") | html %]
+            </a>
+[% RenderBlockEnd("LinkMenuDelete") %]
+        </p>
+    </div>
+    <div class="Content">
+        <form action="[% Env("CGIHandle") %]" method="post" name="compose" id="LinkSearchForm">
+            <input type="hidden" name="Action" value="[% Env("Action") %]" />
+            <input type="hidden" name="Mode" value="[% Data.Mode | html %]" />
+            <input type="hidden" name="SourceObject" value="[% Data.SourceObject | html %]" />
+            <input type="hidden" name="SourceKey" value="[% Data.SourceKey | html %]" />
+
+            <div class="WidgetSimple">
+                <div class="Header">
+                    <h2>[% Translate("Select Target Object") | html %]</h2>
+                </div>
+                <div class="Content">
+                    <fieldset class="TableLike">
+                        <label for="TargetIdentifier">
+                            [% Translate("Link object %s with", Data.SourceObjectNormal) | html %]:
+                        </label>
+                        <div class="Field">
+                            [% Data.TargetObjectStrg %]
+
+                            <button type="submit" id="SubmitSelect" name="SubmitSelect" value="[% Translate("Select") | html %]" class="CallForAction Inline"><span>[% Translate("Select") | html %]</span></button>
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+            <div class="WidgetSimple">
+                <div class="Header">
+                    <h2>[% Translate("Search") | html %] [% Data.TargetRealname | html %]</h2>
+                </div>
+                <div class="Content">
+                    <fieldset class="TableLike FixedLabel">
+[% RenderBlockStart("LinkSearchRow") %]
+                        <label for="[% Data.FormKey | html %]">
+                            [% Translate(Data.Name) | html %]:
+                        </label>
+                        <div class="Field">
+                            [% Data.InputStrg %]
+                        </div>
+[% RenderBlockEnd("LinkSearchRow") %]
+                        <div class="Field">
+                            <button type="submit" id="SubmitSearch" name="SubmitSearch" class="CallForAction" value="[% Translate("Search") | html %]"><span><i class="fa fa-search"></i> [% Translate("Search") | html %]</span></button>
+                        </div>
+                    </fieldset>
+                    <fieldset class="TableLike" id="SearchInsert">
+                        <legend><span>[% Translate("Filters in use") | html %]</span></legend>
+                    </fieldset>
+                    <fieldset class="TableLike">
+                        <legend><span>[% Translate("Additional filters") | html %]</span></legend>
+                        <label>[% Translate("Add another attribute") | html %]:</label>
+                        <div class="Field">
+                            [% Data.AttributesStrg %]
+                            <a class="AddButton" href="#" title="[% Translate("Add entry") | html %]"><i class="fa fa-plus-square-o"></i><span class="InvisibleText">[% Translate("Add") | html %]</span></a>
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+[% RenderBlockStart("LinkTableComplex") %]
+            [% Data.LinkTableStrg %]
+[% RenderBlockEnd("LinkTableComplex") %]
+        </form>
+    </div>
+    <fieldset class="TableLike Hidden" id="SearchAttributesHidden">
+        <div class="Clear"></div>
+        <label for="Fulltext" id="LabelFulltext">[% Translate("Fulltext") | html %]:</label>
+        <div class="Field">
+            <input type="text" name="Fulltext" value="[% Data.Fulltext | html %]" class="W50pc" />
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+            <div class="FieldExplanation">
+                [% Translate("Searches in the attributes From, To, Cc, Subject and the article body, overriding other attributes with the same name.") | html %]
+            </div>
+        </div>
+        <div class="Clear"></div>
+        <label for="TicketNumber" id="LabelTicketNumber">[% Config("Ticket::Hook") %]:</label>
+        <div class="Field">
+            <input type="text" name="TicketNumber" placeholder="[% Translate("(e. g. 10*5155 or 105658*)") | html %]" value="[% Data.TicketNumber | html %]" class="W50pc"/>
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="Title" id="LabelTitle">[% Translate("Title") | html %]:</label>
+        <div class="Field">
+            <input type="text" name="Title" value="[% Data.Title | html %]" class="W50pc"/>
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="CustomerID" id="LabelCustomerID">[% Translate("CustomerID (complex search)") | html %]:</label>
+        <div class="Field">
+            <input type="text" name="CustomerID" placeholder="[% Translate("(e. g. 234321)") | html %]" value="[% Data.CustomerID | html %]" class="W50pc"/>
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="CustomerIDRaw" id="LabelCustomerIDRaw">[% Translate("CustomerID (exact match)") | html %]:</label>
+        <div class="Field">
+            <input type="text" name="CustomerIDRaw" placeholder="[% Translate("(e. g. 234321)") | html %]" value="[% Data.CustomerIDRaw | html %]" class="W50pc"/>
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="CustomerUserLogin" id="LabelCustomerUserLogin">[% Translate("Customer User Login (complex search)") | html %]:</label>
+        <div class="Field">
+            <input type="text" name="CustomerUserLogin" placeholder="[% Translate("(e. g. U5150)") | html %]" value="[% Data.CustomerUserLogin | html %]" class="W50pc"/>
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="CustomerUserLoginRaw" id="LabelCustomerUserLoginRaw">[% Translate("Customer User Login (exact match)") | html %]:</label>
+        <div class="Field">
+            <input type="text" name="CustomerUserLoginRaw" placeholder="[% Translate("(e. g. U5150)") | html %]" value="[% Data.CustomerUserLoginRaw | html %]" class="W50pc"/>
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="TypeIDs" id="LabelTypeIDs">[% Translate("Type") | html %]:</label>
+        <div class="Field">
+            [% Data.TypesStrg %]
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="From" id="LabelFrom">[% Translate("From") | html %]:</label>
+        <div class="Field">
+            <input type="text" name="From" value="[% Data.From | html %]" class="W50pc"/>
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="To" id="LabelTo">[% Translate("To") | html %]:</label>
+        <div class="Field">
+            <input type="text" name="To" value="[% Data.To | html %]" class="W50pc"/>
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="Cc" id="LabelCc">[% Translate("Cc") | html %]:</label>
+        <div class="Field">
+            <input type="text" name="Cc" value="[% Data.Cc | html %]" class="W50pc"/>
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="Subject" id="LabelSubject">[% Translate("Subject") | html %]:</label>
+        <div class="Field">
+            <input type="text" name="Subject" value="[% Data.Subject | html %]" class="W50pc"/>
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="Body" id="LabelBody">[% Translate("Text") | html %]:</label>
+        <div class="Field">
+            <input type="text" name="Body" value="[% Data.Body | html %]" class="W50pc"/>
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="AttachmentName" id="LabelAttachmentName">[% Translate("Attachment Name") | html %]:</label>
+        <div class="Field">
+            <input type="text" name="AttachmentName" placeholder="[% Translate("(e. g. m*file or myfi*)") | html %]" value="[% Data.AttachmentName | html %]" class="W50pc"/>
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="ServiceIDs" id="LabelServiceIDs">[% Translate("Service") | html %]:</label>
+        <div class="Field">
+            [% Data.ServicesStrg %]
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="SLAIDs" id="LabelSLAIDs">[% Translate("Service Level Agreement") | html %]:</label>
+        <div class="Field">
+            [% Data.SLAsStrg %]
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="PriorityIDs" id="LabelPriorityIDs">[% Translate("Priority") | html %]:</label>
+        <div class="Field">
+            [% Data.PrioritiesStrg %]
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="StateIDs" id="LabelStateIDs">[% Translate("State") | html %]:</label>
+        <div class="Field">
+            [% Data.StatesStrg %]
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="QueueIDs" id="LabelQueueIDs">[% Translate("Queue") | html %]:</label>
+        <div class="Field">
+            [% Data.QueuesStrg %]
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="OwnerIDs" id="LabelOwnerIDs">[% Translate("Agent") | html %]/[% Translate("Owner") | html %]:</label>
+        <div class="Field">
+            [% Data.UserStrg %]
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="ResponsibleIDs" id="LabelResponsibleIDs">[% Translate("Agent") | html %]/[% Translate("Responsible") | html %]:</label>
+        <div class="Field">
+            [% Data.ResponsibleStrg %]
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="CreatedQueueIDs" id="LabelCreatedQueueIDs">[% Translate("Created in Queue") | html %]:</label>
+        <div class="Field">
+            [% Data.CreatedQueuesStrg %]
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="CreatedUserIDs" id="LabelCreatedUserIDs">[% Translate("Created by") | html %] [% Translate("Agent") | html %]/[% Translate("Owner") | html %]:</label>
+        <div class="Field">
+            [% Data.CreatedUserStrg %]
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="LockIDs" id="LabelLockIDs">[% Translate("Lock state") | html %]:</label>
+        <div class="Field">
+            [% Data.LocksStrg %]
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="WatchUserIDs" id="LabelWatchUserIDs">[% Translate("Watcher") | html %]:</label>
+        <div class="Field">
+            [% Data.WatchUserStrg %]
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        <label for="SearchInArchive" id="LabelSearchInArchive">[% Translate("Archive Search") | html %]:</label>
+        <div class="Field">
+            [% Data.SearchInArchiveStrg %]
+            <a class="RemoveButton" href="#" title="[% Translate("Remove this entry") | html %]"><i class="fa fa-minus-square-o"></i><span class="InvisibleText">[% Translate("Remove") | html %]</span></a>
+        </div>
+        <div class="Clear"></div>
+        [% Data.AttributesOrigStrg %]
+    </fieldset>
+</div>
+[% RenderBlockEnd("Link") %]
+
+[% RenderBlockStart("Delete") %]
+<div class="LayoutPopup ARIARoleMain">
+
+    <div class="Header">
+        <h1>
+            [% Translate("Unlink Object: %s", Data.SourceObjectNormal) | html %]
+        </h1>
+        <p>
+            <a href="[% Env("Baselink") %]Action=[% Env("Action") %];Subaction=Close" id="LinkDeleteCloseLink">[% Translate("Close dialog") | html %]</a>
+
+            [% Translate("or") | html %]
+            <a href="[% Env("Baselink") %]Action=[% Env("Action") %];Mode=[% Data.Mode | uri %];SourceObject=[% Data.SourceObject | uri %];SourceKey=[% Data.SourceKey | uri %];TargetIdentifier=[% Data.TargetIdentifier | uri %]" class="menuitem">
+                [% Translate("go to link add screen") | html %]
+            </a>
+        </p>
+    </div>
+    <div class="Content">
+        <h2>[% Translate("Select Target Object") | html %]</h2>
+        <form action="[% Env("CGIHandle") %]" method="get">
+            <input type="hidden" name="Action" value="[% Env("Action") %]" />
+            <input type="hidden" name="Subaction" value="LinkDelete" />
+            <input type="hidden" name="Mode" value="[% Data.Mode | html %]" />
+            <input type="hidden" name="SourceObject" value="[% Data.SourceObject | html %]" />
+            <input type="hidden" name="SourceKey" value="[% Data.SourceKey | html %]" />
+            <input type="hidden" name="TargetIdentifier" value="[% Data.TargetIdentifier | html %]" />
+[% RenderBlockStart("DeleteTableComplex") %]
+            [% Data.LinkTableStrg %]
+[% RenderBlockEnd("DeleteTableComplex") %]
+        </form>
+    </div>
+</div>
+[% RenderBlockEnd("Delete") %]
